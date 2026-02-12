@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 module "util_buckets" {
-  source = "../../modules/util-bucket"
+  source = "./modules/util-bucket"
   providers = {
     aws = aws
   }
