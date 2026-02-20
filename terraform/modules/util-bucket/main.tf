@@ -11,3 +11,7 @@ locals {
 resource "aws_s3_bucket" "example" {
   bucket = "utils-${local.account_id}-${local.region}"
 }
+
+resource "aws_s3_bucket" "helper" {
+  bucket = "helper-${local.account_id}-${local.region}"
+}
