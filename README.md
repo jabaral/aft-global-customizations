@@ -1,3 +1,9 @@
+# AFT Global Customizations
+
+[![Checkov](https://github.com/jabaral/aft-global-customizations/.github/workflows/checkov.yml/badge.svg)](https://github.com/jabaral/aft-global-customizations/.github/workflows/checkov.yml)
+[![TFLint](https://github.com/jabaral/aft-global-customizations/.github/workflows/tflint.yml/badge.svg)](https://github.com/jabaral/aft-global-customizations/.github/workflows/tflint.yml)
+[![Terraform Docs](https://github.com/jabaral/aft-global-customizations/.github/workflows/terraform-docs.yml/badge.svg)](https://github.com/jabaral/aft-global-customizations/.github/workflows/terraform-docs.yml)
+
 # Introduction
 This repo stores the Terraform and API helpers for the Global Customizations. Global Customizations are used to customize all provisioned accounts with customer defined resources. The resources can be created through Terraform or through Python, leveraging the API helpers. The customization run is parameterized at runtime.
 
@@ -38,3 +44,50 @@ region = $(aws ec2 describe-availability-zones --query 'AvailabilityZones[0].[Re
 cidr = $(python ./python/source/get_cidr_range.py)
 aws ssm put-parameter --name /$account/$region/vpc/cidr --value $cidr
 ```
+
+
+---
+
+## GitOps Workflow
+
+This repository follows a GitOps approach where changes are automatically applied by AFT when merged to the appropriate branch.
+
+### Environments
+- **Production**: `main` branch → ca-central-1
+- **Test**: `test` branch → ca-central-1
+
+### Workflow
+1. Create feature branch from `main` or `test`
+2. Make changes to Terraform code
+3. Create pull request to target branch (`main` or `test`)
+4. Automated validation runs:
+   - Security scanning (Checkov)
+   - Terraform linting (TFLint)
+   - Documentation generation
+   - Link validation
+5. Review and approve PR
+6. Merge to target branch
+7. AFT automatically applies changes to corresponding environment
+
+### GitHub Actions
+
+All pull requests are validated with:
+- **Checkov**: Security and compliance scanning
+- **TFLint**: Terraform best practices validation
+- **Terraform Docs**: Auto-generated documentation
+- **Link Checker**: Documentation link validation
+- **Release Notes**: Ensures RELEASE_NOTES.md is updated
+
+For detailed workflow documentation, see:
+- [GITHUB_ACTIONS_DOCUMENTATION.md](GITHUB_ACTIONS_DOCUMENTATION.md) - Complete workflow documentation
+- [WORKFLOWS_QUICK_REFERENCE.md](WORKFLOWS_QUICK_REFERENCE.md) - Quick reference guide
+- [GITHUB_ACTIONS_REVIEW_SUMMARY.md](GITHUB_ACTIONS_REVIEW_SUMMARY.md) - Summary of changes
+
+### Branch Protection
+
+Recommended branch protection rules:
+- Require pull request reviews
+- Require status checks to pass before merging
+- Require branches to be up to date before merging
+
+---

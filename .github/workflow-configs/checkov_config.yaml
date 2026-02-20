@@ -1,0 +1,15 @@
+---
+branch: main
+download-external-modules: false
+evaluate-variables: true
+external-modules-download-path: .external_modules
+framework:
+  - terraform
+  - github_actions
+mask: [ ]
+output:
+  - sarif
+quiet: true
+skip-check:
+  - CKV_TF_1
+  - CKV2_GHA_1

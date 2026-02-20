@@ -1,0 +1,28 @@
+{
+  "aliveStatusCodes": [
+    200,
+    206
+  ],
+  "fallbackRetryDelay": "30s",
+  "ignorePatterns": [
+    {
+      "pattern": "^http[s]*.*example.com"
+    },
+    {
+      "pattern": "^#[a-z\\/_]*"
+    },
+    {
+      "pattern": "*/actions/workflows/*.yml$"
+    }
+
+  ],
+  "replacementPatterns": [
+    {
+      "pattern": "^/",
+      "replacement": "{{BASEURL}}/"
+    }
+  ],
+  "retryCount": 5,
+  "retryOn429": true,
+  "timeout": "20s"
+}
