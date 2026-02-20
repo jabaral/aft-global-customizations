@@ -78,6 +78,24 @@ All pull requests are validated with:
 - **Link Checker**: Documentation link validation
 - **Release Notes**: Ensures RELEASE_NOTES.md is updated
 
+### Pre-commit Hooks (Local Validation)
+
+Run the same checks locally before committing:
+
+```bash
+# One-time setup
+./setup-pre-commit.sh
+
+# Or manual setup
+pip install pre-commit
+pre-commit install
+
+# Hooks run automatically on commit
+git commit -m "feat: Add new resource"
+```
+
+See [PRE_COMMIT_SETUP.md](PRE_COMMIT_SETUP.md) for detailed setup instructions.
+
 For detailed workflow documentation, see:
 - [GITHUB_ACTIONS_DOCUMENTATION.md](GITHUB_ACTIONS_DOCUMENTATION.md) - Complete workflow documentation
 - [WORKFLOWS_QUICK_REFERENCE.md](WORKFLOWS_QUICK_REFERENCE.md) - Quick reference guide
