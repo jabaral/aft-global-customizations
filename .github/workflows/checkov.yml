@@ -48,7 +48,7 @@ jobs:
             do
               pushd "${i}" >> /dev/null
               # shellcheck disable=SC2035
-              tflint="$(grep -Hnr --color=always -e 'tflint-ignore: [a-zA-Z0-9_\-]*' ./* | sed -e "${sed_expression}"  ||true)"       
+              tflint="$(grep -Hnr --color=always -e 'tflint-ignore: [a-zA-Z0-9_\-]*' ./* | sed -e "${sed_expression}"  ||true)"
               # shellcheck disable=SC2035
               checkov="$(grep -Hnr --color=always -e 'checkov:skip=CKV[0-9a-zA-Z_]*' ./* | sed -e "${sed_expression}" || true)"
               # shellcheck disable=SC2035
@@ -72,7 +72,7 @@ jobs:
               fi
             done
             #end multi-line output and direct it to ${GITHUB_OUTPUT}
-            echo 'EOF' 
+            echo 'EOF'
           } >> "${GITHUB_OUTPUT}"
           cat "${GITHUB_OUTPUT}"
       - name: Update PR
@@ -100,7 +100,7 @@ jobs:
             } else {
                output = `# Automated Code Review Warnings
             > [!WARNING]
-            > Suspicious findings, worthy if further investigation: 
+            > Suspicious findings, worthy if further investigation:
             ${{ steps.suppressed.outputs.myout }}
             `
             }
@@ -122,11 +122,11 @@ jobs:
             }
 
     outputs:
-      changed: ${{ steps.detect-directory-changes.outputs.changed }}
+      changed: ${{ steps.detect.outputs.changed }}
   scan:
     name: Checkov Scan
     needs: detect-directory-changes
-    if: needs.detect-directory-changes.outputs.changed != '[]'
+    if: needs.detect-directory-changes.outputs.changed != '[]' && needs.detect-directory-changes.outputs.changed != ''
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false

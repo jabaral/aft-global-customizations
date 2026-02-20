@@ -104,6 +104,7 @@ For detailed workflow documentation, see:
 ### Branch Protection
 
 Recommended branch protection rules:
+
 - Require pull request reviews
 - Require status checks to pass before merging
 - Require branches to be up to date before merging
