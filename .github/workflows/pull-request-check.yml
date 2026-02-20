@@ -1,0 +1,48 @@
+---
+name: Pull request Check
+
+permissions:
+  contents: read # for actions/checkout to fetch code
+  security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+  actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
+
+on:
+  pull_request:
+    branches:
+      - main
+      - test
+jobs:
+  verify-release-notes:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v4.2.2
+      with:
+        fetch-depth: '0'
+    - name: Check Commit Message
+      id: check-commit-message
+      shell: bash
+      run: |
+        commit_msg="$(git log --no-merges -1 --pretty=format:"%s%n%n%b")"
+        echo "::group::Commit message"
+        echo "${commit_msg}"
+        echo "::endgroup::"
+        if echo "${commit_msg}" | grep "#norelease" --ignore-case > /dev/null
+        then
+          echo "is-release=false" >> "${GITHUB_OUTPUT}"
+          echo "Commit message contains '#norelease'. Verify release notes will be skipped."
+        else
+          echo "is-release=true" >> "${GITHUB_OUTPUT}"
+          echo "Commit message does NOT contains '#norelease'. Verify release notes will be performed."
+        fi
+    - name: Verify release notes
+      if: ${{ steps.check-commit-message.outputs.is-release == 'true' }}
+      shell: bash
+      env:
+        FILENAME: "RELEASE_NOTES.md"
+      run: |
+        base_branch="${{ github.base_ref }}"
+        if ! git diff --name-only origin/${base_branch} HEAD -- | grep "${FILENAME}"; then
+          echo "::error::${FILENAME} is not yet updated. Please update it as it will be used as the release note."
+          exit 90
+        fi
