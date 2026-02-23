@@ -19,3 +19,11 @@ module "util_buckets" {
     aws = aws
   }
 }
+
+module "images_bucket" {
+  source = "./modules/util-bucket"
+  suffix = "images"
+  providers = {
+    aws = aws
+  }
+}

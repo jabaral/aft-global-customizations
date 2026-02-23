@@ -16,6 +16,7 @@ No providers.
 
 | Name | Source | Version |
 |------|--------|---------|
+| <a name="module_images_bucket"></a> [images\_bucket](#module\_images\_bucket) | ./modules/util-bucket | n/a |
 | <a name="module_util_buckets"></a> [util\_buckets](#module\_util\_buckets) | ./modules/util-bucket | n/a |
 
 ## Resources
