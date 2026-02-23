@@ -162,6 +162,6 @@ repos:
 
 # Global settings
 default_install_hook_types: [pre-commit, commit-msg]
-default_stages: [commit]
+default_stages: [pre-commit]
 fail_fast: false
 minimum_pre_commit_version: '2.20.0'
