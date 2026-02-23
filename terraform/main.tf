@@ -13,6 +13,7 @@ terraform {
 }
 
 module "util_buckets" {
+  count  = 0
   source = "./modules/util-bucket"
   suffix = "sdfsd"
   providers = {
@@ -21,6 +22,7 @@ module "util_buckets" {
 }
 
 module "images_bucket" {
+  count  = 0
   source = "./modules/util-bucket"
   suffix = "images"
   providers = {
