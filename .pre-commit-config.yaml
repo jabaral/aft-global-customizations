@@ -44,7 +44,7 @@ repos:
         name: Checkov
         description: Runs Checkov on Terraform files
         args:
-          - --args=--config-file=.github/workflow-configs/checkov_config.yaml
+          - --args=--config-file __GIT_WORKING_DIR__/.github/workflow-configs/checkov_config.yaml
           - --args=--quiet
           - --args=--framework=terraform
 
