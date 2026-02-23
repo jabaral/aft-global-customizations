@@ -41,7 +41,9 @@ No modules.
 
 ## Inputs
 
-No inputs.
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| <a name="input_suffix"></a> [suffix](#input\_suffix) | The suffix of the utils bucket to support multiple ones. | `string` | n/a | yes |
 
 ## Outputs
 

@@ -14,6 +14,7 @@ terraform {
 
 module "util_buckets" {
   source = "./modules/util-bucket"
+  suffix = "sdfsd"
   providers = {
     aws = aws
   }

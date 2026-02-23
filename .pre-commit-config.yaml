@@ -70,23 +70,6 @@ repos:
         description: Linter for Markdown files
         files: \.md$
 
-  # Markdown link checking
-  # DISABLED: Node.js module compatibility issues with markdown-link-check
-  # Alternative: Run manually with 'npx markdown-link-check README.md'
-  # or use GitHub Actions workflow which has this check
-  # - repo: local
-  #   hooks:
-  #     - id: markdown-link-check
-  #       name: Markdown Link Check
-  #       description: Checks links in Markdown files
-  #       entry: markdown-link-check
-  #       language: system
-  #       args:
-  #         - --config
-  #         - .github/workflow-configs/link-checker_config.json
-  #       files: \.md$
-  #       pass_filenames: true
-
   # General file checks
   # Official: https://github.com/pre-commit/pre-commit-hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks

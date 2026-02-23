@@ -11,7 +11,7 @@ locals {
 #checkov:skip=CKV2_AWS_61:Lifecycle configuration not required for utility buckets
 #checkov:skip=CKV_AWS_144:Cross-region replication not required for utility buckets
 resource "aws_s3_bucket" "default" {
-  bucket = "utils-${local.account_id}-${local.region}"
+  bucket = "utils-${local.account_id}-${local.region}-${var.suffix}"
 }
 
 resource "aws_s3_bucket_versioning" "default" {
