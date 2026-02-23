@@ -26,7 +26,7 @@ jobs:
       with:
         fetch-depth: '0'
     - name: Setup TFLint
-      uses: terraform-linters/setup-tflint@v3
+      uses: terraform-linters/setup-tflint@v6.2.1
     - name: Show version
       run: tflint --version
     - name: Init TFLint
