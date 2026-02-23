@@ -7,4 +7,3 @@ paths:
   .github/workflows/**/*.{yml,yaml}:
     ignore:
       - 'property "detect-directory-changes" is not defined in object type .+'
-

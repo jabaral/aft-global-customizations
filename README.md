@@ -4,41 +4,51 @@
 [![TFLint](https://github.com/jabaral/aft-global-customizations/.github/workflows/tflint.yml/badge.svg)](https://github.com/jabaral/aft-global-customizations/.github/workflows/tflint.yml)
 [![Terraform Docs](https://github.com/jabaral/aft-global-customizations/.github/workflows/terraform-docs.yml/badge.svg)](https://github.com/jabaral/aft-global-customizations/.github/workflows/terraform-docs.yml)
 
-# Introduction
-This repo stores the Terraform and API helpers for the Global Customizations. Global Customizations are used to customize all provisioned accounts with customer defined resources. The resources can be created through Terraform or through Python, leveraging the API helpers. The customization run is parameterized at runtime.
+## Introduction
+This repo stores the Terraform and API helpers for the Global Customizations. Global Customizations are used to customize all provisioned accounts with customer defined resources.
+The resources can be created through Terraform or through Python, leveraging the API helpers. The customization run is parameterized at runtime.
 
-# Usage
+## Usage
 To leverage Global Customizations, populate this repo as per the instructions below.
 
-## Terraform
+### Terraform
+
 AFT provides Jinja templates for Terraform backend and providers. These render at the time Terraform is applied. If needed, additional providers can be defined by creating a providers.tf file.
 
 To create Terraform resources, provide your own Terraform files (ex. main.tf, variables.tf, etc) with the resources you would like to create, placing them in the 'terraform' directory.
 
-## API Helpers
+### API Helpers
+
 The purpose of API helpers is to perform actions that cannot be performed within Terraform.
 
 ### Python
+
 The api_helpers/python folder contains a requirements.txt, where you can specify libraries/packages to be installed via PIP.
 
 ### Bash
-This is where you define what runs before/after Terraform, as well as the order the Python scripts execute, along with any command line parameters. These bash scripts can be extended to perform other actions, such as leveraging the AWS CLI or performing additional/custom Bash scripting.
+
+This is where you define what runs before/after Terraform, as well as the order the Python scripts execute, along with any command line parameters.
+These bash scripts can be extended to perform other actions, such as leveraging the AWS CLI or performing additional/custom Bash scripting.
 
 - pre-api-helpers.sh - Actions to execute prior to running Terraform.
 - post-api-helpers.sh - Actions to execute after running Terraform.
 
 ### Sample api-helpers.sh
 
-Sample #1 - Using AWS CLI to query for resources, save to a variable, and then pass to a script. In the example below, all running instances are queried, stopped, and started using AWS CLI and custom Python scritpts.
-```
+Sample #1 - Using AWS CLI to query for resources, save to a variable, and then pass to a script. In the example below, all running instances are queried, stopped,
+and started using AWS CLI and custom Python scripts.
+
+```bash
 instances=$(aws ec2 describe-instances --filters "Name=instance-state-name,Values=running")
 python ./python/source/stop_instances.py --instances $instances
 sleep 10s
 python ./python/source/start_instances.py --instances $instances
 ```
 
-Sample #2 - Query a 3rd party IPAM solution, and save the given CIDR to AWS Parameter Store. This SSM parameter could be leveraged from Terraform using a data object to create a VPC.
-```
+Sample #2 - Query a 3rd party IPAM solution, and save the given CIDR to AWS Parameter Store. This
+SSM parameter could be leveraged from Terraform using a data object to create a VPC.
+
+```bash
 account = $(aws sts get-caller-identity --query Account --output text)
 region = $(aws ec2 describe-availability-zones --query 'AvailabilityZones[0].[RegionName]' --output text)
 cidr = $(python ./python/source/get_cidr_range.py)
@@ -53,10 +63,12 @@ aws ssm put-parameter --name /$account/$region/vpc/cidr --value $cidr
 This repository follows a GitOps approach where changes are automatically applied by AFT when merged to the appropriate branch.
 
 ### Environments
+
 - **Production**: `main` branch → ca-central-1
 - **Test**: `test` branch → ca-central-1
 
 ### Workflow
+
 1. Create feature branch from `main` or `test`
 2. Make changes to Terraform code
 3. Create pull request to target branch (`main` or `test`)
@@ -72,6 +84,7 @@ This repository follows a GitOps approach where changes are automatically applie
 ### GitHub Actions
 
 All pull requests are validated with:
+
 - **Checkov**: Security and compliance scanning
 - **TFLint**: Terraform best practices validation
 - **Terraform Docs**: Auto-generated documentation
@@ -80,23 +93,154 @@ All pull requests are validated with:
 
 ### Pre-commit Hooks (Local Validation)
 
-Run the same checks locally before committing:
+Pre-commit hooks run the same validation checks locally that GitHub Actions runs on pull requests, catching issues before you push code.
+
+#### Quick Start
 
 ```bash
-# One-time setup
+# One-time automated setup
 ./setup-pre-commit.sh
 
 # Or manual setup
-pip install pre-commit
+pip3 install pre-commit
 pre-commit install
-
-# Hooks run automatically on commit
-git commit -m "feat: Add new resource"
+pre-commit run --all-files
 ```
 
-See [PRE_COMMIT_SETUP.md](PRE_COMMIT_SETUP.md) for detailed setup instructions.
+#### What Gets Checked
+
+The pre-commit hooks validate:
+
+**Terraform**
+
+- Format and syntax validation
+- TFLint (best practices)
+- Checkov (security scanning)
+- TFSec (additional security)
+- terraform-docs (auto-generate documentation)
+
+**Documentation**
+
+- Markdown formatting and linting
+- Link validation
+- YAML syntax
+
+**Security & Quality**
+
+- Secret detection
+- File size limits
+- Trailing whitespace
+- Merge conflict detection
+
+#### Daily Usage
+
+Hooks run automatically on commit:
+
+```bash
+git add .
+git commit -m "feat: Add new feature"
+# Hooks run automatically and validate changes
+```
+
+Run manually without committing:
+
+```bash
+# All hooks on all files
+pre-commit run --all-files
+
+# All hooks on staged files only
+pre-commit run
+
+# Specific hook
+pre-commit run terraform_fmt --all-files
+pre-commit run terraform_checkov --all-files
+```
+
+#### Required Tools
+
+Install these tools for full functionality:
+
+```bash
+# macOS (Homebrew)
+brew install pre-commit tflint tfsec terraform-docs actionlint yamllint node
+pip3 install checkov detect-secrets
+npm install -g markdownlint-cli markdown-link-check
+
+# Linux (apt + pip)
+pip3 install pre-commit checkov detect-secrets yamllint
+# Install others from releases or package manager
+```
+
+#### Common Commands
+
+```bash
+# Format Terraform files
+pre-commit run terraform_fmt --all-files
+
+# Run security scan
+pre-commit run terraform_checkov --all-files
+
+# Update documentation
+pre-commit run terraform_docs --all-files
+
+# Update hooks to latest versions
+pre-commit autoupdate
+
+# Skip hooks (use sparingly)
+git commit -m "message" --no-verify
+SKIP=terraform_checkov git commit -m "message"
+```
+
+#### Troubleshooting
+
+**Hook fails**: Read the error, fix the issue, stage files, and commit again.
+
+**Too slow**: Skip slow hooks during development, run full validation before pushing:
+
+```bash
+SKIP=terraform_checkov,tfsec git commit -m "WIP"
+pre-commit run --all-files  # Before pushing
+```
+
+**False positive**: Update baseline or add suppression:
+
+```bash
+# Update secrets baseline
+detect-secrets scan --baseline .secrets.baseline
+
+# Add suppression in code
+# checkov:skip=CKV_AWS_18:Reason here
+```
+
+#### Configuration Files
+
+- `.pre-commit-config.yaml` - Main hook configuration
+- `.tflint.hcl` - TFLint settings
+- `.secrets.baseline` - Known false positives for secret detection
+- `.github/workflow-configs/checkov_config.yaml` - Checkov settings
+- `.github/linters/` - Linter configurations
+
+#### Best Practices
+
+1. Run `pre-commit run --all-files` before pushing
+2. Fix issues rather than skipping hooks
+3. Document suppressions with clear reasons
+4. Update hooks regularly: `pre-commit autoupdate`
+5. Use meaningful commit messages following conventional commits
+
+#### Pre-commit vs GitHub Actions
+
+| Aspect | Pre-commit | GitHub Actions |
+|--------|-----------|----------------|
+| When | Before commit | After push (on PR) |
+| Speed | Fast (local) | Slower (remote) |
+| Feedback | Immediate | Delayed |
+| Scope | Changed files | All files |
+
+Use both for best results: pre-commit catches issues early, GitHub Actions enforces standards before merge.
 
 For detailed workflow documentation, see:
+
 - [GITHUB_ACTIONS_DOCUMENTATION.md](GITHUB_ACTIONS_DOCUMENTATION.md) - Complete workflow documentation
 - [WORKFLOWS_QUICK_REFERENCE.md](WORKFLOWS_QUICK_REFERENCE.md) - Quick reference guide
 - [GITHUB_ACTIONS_REVIEW_SUMMARY.md](GITHUB_ACTIONS_REVIEW_SUMMARY.md) - Summary of changes

@@ -2,9 +2,6 @@
 # https://github.com/terraform-linters/tflint
 
 config {
-  # Enable module inspection
-  module = true
-
   # Force return an error if there are issues
   force = false
 
