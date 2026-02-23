@@ -1,0 +1,164 @@
+---
+name: Checkov
+
+permissions:
+  contents: read # for actions/checkout to fetch code
+  security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
+  actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
+  discussions: write
+  pull-requests: write
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+      - test
+    paths:
+      - "**.tf"
+      - "**.tfvars"
+
+jobs:
+  detect-directory-changes:
+    name: "Detect Directory Changes"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+      - name: Detect Directory Changes
+        id: detect
+        uses: tchupp/actions-detect-directory-changes@v1
+        with:
+          included-paths: "!./.github/**,!**/.terraform/**,!**/examples/**"
+          included-extensions: "tf,yml,yaml,json"
+      - name: List Changed Directories
+        run: echo Changed ${{ steps.detect.outputs.changed }}
+      - name: Find Suppressed
+        id: suppressed
+        run: |
+          dirs=$(echo ${{ steps.detect.outputs.changed }} | sed  's/[][\"]*//g; s/,/ /g')
+          {
+            #shorten git filepath to '...', replace ascii color sequences with markdown *italic* and **bold*
+            sed_expression='s/git\@[-a-z0-9_:.]*/.../;s/\x1B\[3[0-9]m\x1B\[K\([-a-z0-9\./\#:-_ ]*\)\x1B\[m\x1B\[K/ *\1* /g;s/\x1B\[01;3[0-9]m\x1B\[K\([-a-z0-9\./\#:-_ ]*\)\x1B\[m\x1B\[K/ **\1** /g'
+            #start multi-line ouput 'myout'
+            echo 'myout<<EOF'
+            for i in $dirs
+            do
+              pushd "${i}" >> /dev/null
+              # shellcheck disable=SC2035
+              tflint="$(grep -Hnr --color=always -e 'tflint-ignore: [a-zA-Z0-9_\-]*' ./* | sed -e "${sed_expression}"  ||true)"
+              # shellcheck disable=SC2035
+              checkov="$(grep -Hnr --color=always -e 'checkov:skip=CKV[0-9a-zA-Z_]*' ./* | sed -e "${sed_expression}" || true)"
+              # shellcheck disable=SC2035
+              refs="$(grep -Hnr --color=always -e 'ref=[a-zA-Z0-9\.]*' ./* |grep -v 'ref=v' | sed -e "${sed_expression}" || true)"
+              popd >> /dev/null
+              if [ $(( ${#tflint} + ${#checkov} + ${#refs} )) -gt 0 ]; then
+                echo "## Review for directory *${i}*"
+                if [ ${#tflint} -gt 0 ]; then
+                  echo '### :warning: Your code contains TFLint scan Suppressions :warning:'
+                  #escape doallar sign symbol before printing to avoid it's variable expansion
+                  echo "${tflint//\$/\$ }"
+                fi
+                if [ ${#checkov} -gt 0 ]; then
+                  echo '### :warning: Your code contains Checkov scan Suppressions :warning:'
+                  echo "${checkov//\$/\$ }"
+                fi
+                if [ ${#refs} -gt 0  ]; then
+                  echo '### :warning: Your should use version numbers in your module references (ref=v...) :warning:'
+                  echo "${refs//\$/\\$ }"
+                fi
+              fi
+            done
+            #end multi-line output and direct it to ${GITHUB_OUTPUT}
+            echo 'EOF'
+          } >> "${GITHUB_OUTPUT}"
+          cat "${GITHUB_OUTPUT}"
+      - name: Update PR
+        uses: actions/github-script@v7.0.1
+        if: github.event_name == 'pull_request'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            // 1. Retrieve existing bot comments for the PR
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            })
+            const botComment = comments.find(comment => {
+              return comment.user.type === 'Bot' && comment.body.includes('Automated Code Review Warnings')
+            })
+            // 2. Build the updated comment
+            if ( ${{ steps.suppressed.outputs.myout == '' }} ) {
+               output = `## Automated Code Review Warnings
+            - :white_check_mark: TFLint scan suppressions found
+            - :white_check_mark: No Checkov Scan suppressions found
+            - :white_check_mark: All external code references use version tags
+            `
+            } else {
+               output = `# Automated Code Review Warnings
+            > [!WARNING]
+            > Suspicious findings, worthy if further investigation:
+            ${{ steps.suppressed.outputs.myout }}
+            `
+            }
+            // 3. If we have a comment, update it, otherwise create a new one
+            if (botComment) {
+              github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: output
+              })
+            } else {
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output
+              })
+            }
+
+    outputs:
+      changed: ${{ steps.detect.outputs.changed }}
+  scan:
+    name: Checkov Scan
+    needs: detect-directory-changes
+    if: needs.detect-directory-changes.outputs.changed != '[]' && needs.detect-directory-changes.outputs.changed != ''
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        project: ${{ fromJSON(needs.detect-directory-changes.outputs.changed) }}
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4.2.2
+        with:
+          sparse-checkout: |
+            ${{ matrix.project }}/
+            .github/workflow-configs/
+            .github/linters/
+            modules/tools/
+          #fetch-depth: '0'
+      - name: Run Checkov
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          config_file: .github/workflow-configs/checkov_config.yaml
+          directory: ${{matrix.project}}
+          output_file_path: reports/${{ matrix.project }}.sarif
+      - name: Upload SARIF file
+        continue-on-error: true
+        id: upload-sarif-file
+        uses: github/codeql-action/upload-sarif@v3.27.9
+
+        # Results are generated only on a success or failure
+        # this is required since GitHub by default won't run the next step
+        # when the previous one has failed. Security checks that do not pass will 'fail'.
+        # An alternative is to add `continue-on-error: true` to the previous step
+        # Or 'soft_fail: true' to checkov.
+        if: success() || failure()
+        with:
+          sarif_file: reports/${{ matrix.project }}.sarif
+          category: ${{ matrix.project }}

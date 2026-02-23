@@ -246,3 +246,10 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+
+# Pre-commit
+.pre-commit-config.yaml.backup
+
+# SARIF files
+*.sarif

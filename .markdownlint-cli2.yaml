@@ -1,0 +1,25 @@
+# Configuration for markdownlint-cli2
+# https://github.com/DavidAnson/markdownlint-cli2
+
+# Use the .markdownlint.yaml config
+config:
+  # MD013/line-length - Disable line length checks
+  MD013: false
+
+  # MD024/no-duplicate-heading - Allow duplicate headings (terraform-docs generates these)
+  MD024: false
+
+  # MD033/no-inline-html - Allow inline HTML
+  MD033:
+    allowed_elements:
+      - a
+      - br
+      - user-story-number
+
+  # MD041/first-line-heading - Allow files without top-level heading first
+  MD041: false
+
+# Globs to ignore
+ignores:
+  - node_modules
+  - .git

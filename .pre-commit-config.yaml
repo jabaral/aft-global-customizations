@@ -1,0 +1,167 @@
+---
+# Pre-commit hooks configuration
+# Install: pip install pre-commit
+# Setup: pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # Terraform formatting and validation
+  # Official: https://github.com/antonbabenko/pre-commit-terraform
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.96.1
+    hooks:
+      # Format Terraform files
+      - id: terraform_fmt
+        name: Terraform fmt
+        description: Rewrites all Terraform configuration files to canonical format
+
+      # Validate Terraform files
+      - id: terraform_validate
+        name: Terraform validate
+        description: Validates all Terraform configuration files
+        args:
+          - --hook-config=--retry-once-with-cleanup=true
+
+      # Run TFLint
+      - id: terraform_tflint
+        name: TFLint
+        description: Linter for Terraform files
+        args:
+          - --args=--config=__GIT_WORKING_DIR__/.tflint.hcl
+          - --args=--recursive
+
+      # Generate Terraform documentation
+      - id: terraform_docs
+        name: Terraform docs
+        description: Inserts input and output documentation into README.md
+        args:
+          - --hook-config=--path-to-file=README.md
+          - --hook-config=--add-to-existing-file=true
+          - --hook-config=--create-file-if-not-exist=true
+
+      # Run Checkov security scanning
+      - id: terraform_checkov
+        name: Checkov
+        description: Runs Checkov on Terraform files
+        args:
+          - --args=--config-file __GIT_WORKING_DIR__/.github/workflow-configs/checkov_config.yaml
+          - --args=--quiet
+          - --args=--framework=terraform
+
+  # YAML linting
+  # Official: https://github.com/adrienverge/yamllint
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        name: YAML Lint
+        description: Linter for YAML files
+        args:
+          - --config-file=.github/linters/.yaml-lint.yml
+        files: \.(yaml|yml)$
+
+  # Markdown linting
+  # Official: https://github.com/DavidAnson/markdownlint-cli2
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.14.0
+    hooks:
+      - id: markdownlint-cli2
+        name: Markdown Lint
+        description: Linter for Markdown files
+        files: \.md$
+
+  # General file checks
+  # Official: https://github.com/pre-commit/pre-commit-hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      # Prevent large files from being committed
+      - id: check-added-large-files
+        name: Check for large files
+        args: ['--maxkb=1000']
+
+      # Check for files that would conflict in case-insensitive filesystems
+      - id: check-case-conflict
+        name: Check for case conflicts
+
+      # Check for merge conflicts
+      - id: check-merge-conflict
+        name: Check for merge conflicts
+
+      # Check JSON files are valid
+      - id: check-json
+        name: Check JSON
+
+      # Check YAML files are valid
+      - id: check-yaml
+        name: Check YAML
+        args: ['--allow-multiple-documents']
+
+      # Check TOML files are valid
+      - id: check-toml
+        name: Check TOML
+
+      # Detect private keys
+      - id: detect-private-key
+        name: Detect private keys
+
+      # Ensure files end with newline
+      - id: end-of-file-fixer
+        name: Fix end of files
+        exclude: \.terraform\.lock\.hcl$
+
+      # Remove trailing whitespace
+      - id: trailing-whitespace
+        name: Trim trailing whitespace
+        args: ['--markdown-linebreak-ext=md']
+
+      # Check for files that would conflict on Windows
+      - id: mixed-line-ending
+        name: Check line endings
+        args: ['--fix=lf']
+
+  # GitHub Actions workflow linting
+  # Using local system installation to avoid Go compilation
+  - repo: local
+    hooks:
+      - id: actionlint
+        name: GitHub Actions Lint
+        description: Linter for GitHub Actions workflow files
+        entry: actionlint
+        language: system
+        files: ^\.github/workflows/.*\.ya?ml$
+        pass_filenames: true
+
+  # Detect secrets
+  # Official: https://github.com/Yelp/detect-secrets
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        name: Detect secrets
+        description: Detects high entropy strings that are likely to be passwords
+        args: ['--baseline', '.secrets.baseline']
+        exclude: package-lock.json
+
+  # Terraform security scanning with tfsec
+  # Using local system installation to avoid Go compilation
+  - repo: local
+    hooks:
+      - id: tfsec
+        name: TFSec
+        description: Security scanner for Terraform
+        entry: tfsec
+        language: system
+        args:
+          - --concise-output
+          - --force-all-dirs
+          - .
+        pass_filenames: false
+        files: \.tf$
+        exclude: \.terraform/
+
+# Global settings
+default_install_hook_types: [pre-commit, commit-msg]
+default_stages: [pre-commit]
+fail_fast: false
+minimum_pre_commit_version: '2.20.0'

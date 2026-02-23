@@ -1,0 +1,18 @@
+---
+branch: main
+download-external-modules: false
+evaluate-variables: true
+external-modules-download-path: .external_modules
+framework:
+  - terraform
+  - github_actions
+mask: [ ]
+output:
+  - sarif
+quiet: true
+skip-check:
+  - CKV_TF_1
+  - CKV2_GHA_1
+  - CKV2_AWS_62  # Event notifications not required for utility buckets
+  - CKV2_AWS_61  # Lifecycle configuration not required for utility buckets
+  - CKV_AWS_144  # Cross-region replication not required for utility buckets

@@ -1,0 +1,19 @@
+name: 'Stale issue handler'
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@main
+        id: stale
+        with:
+          stale-issue-message: 'This issue is stale because it has been open 15 days with no activity. It will be closed if no further activity occurs after an additional 15 days. Please let us know if this is still an issue. Thank you!'
+          close-issue-message: 'Closing this issue after a prolonged period of inactivity. If this issue is still present, please create a new issue with up-to-date information. Thank you!'
+          stale-issue-label: 'stale-issue'
+          days-before-stale: 15
+          days-before-close: 15
+          exempt-issue-labels: "question,MUST-DO,mustfix,enhancement"

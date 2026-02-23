@@ -1,0 +1,9 @@
+---
+rules:
+  # 130 chars should be enough, but don't fail if a line is longer
+  line-length:
+    max: 130
+    level: warning
+ignore:
+  - .github/linters/actionlint.yml
+  - /workspace/.github/linters/actionlint.yml
